@@ -1,0 +1,19 @@
+//
+//  mapview.pch
+//  JMMapViewDemo
+//
+//  Created by galaxy on 2017/9/4.
+//  Copyright © 2017年 galaxy. All rights reserved.
+//
+
+#ifndef mapview_pch
+#define mapview_pch
+
+// Include any system framework and library headers here that should be included in all compilation units.
+// You will also need to set the Prefix Header build setting of one or more of your targets to reference this file.
+#import <MJExtension/MJExtension.h>
+
+
+
+
+#endif /* mapview_pch */

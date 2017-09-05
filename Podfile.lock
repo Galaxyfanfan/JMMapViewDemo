@@ -1,0 +1,26 @@
+PODS:
+  - AMap3DMap (5.0.0):
+    - AMapFoundation (~> 1.3)
+  - AMapFoundation (1.4.0)
+  - AMapLocation (2.4.0):
+    - AMapFoundation (~> 1.4)
+  - AMapSearch (5.0.0):
+    - AMapFoundation (~> 1.2)
+  - MJExtension (3.0.13)
+
+DEPENDENCIES:
+  - AMap3DMap (~> 5.0.0)
+  - AMapLocation (~> 2.4.0)
+  - AMapSearch (~> 5.0.0)
+  - MJExtension (~> 3.0.13)
+
+SPEC CHECKSUMS:
+  AMap3DMap: 4d0a53d0e57c7c758560225dfdaf593b306bd468
+  AMapFoundation: 458974f46a39df8407fd818ab83d2630d494c726
+  AMapLocation: 47b62b5381a66e4d0c2931b70ffde72682427896
+  AMapSearch: cf7fd100d533995822d92c22586abfaf7cdf6eef
+  MJExtension: 5932755f451458eefa24239358817f8d291240c7
+
+PODFILE CHECKSUM: 13504e2206e25e2598f4494202ce0f4671928abb
+
+COCOAPODS: 1.2.1

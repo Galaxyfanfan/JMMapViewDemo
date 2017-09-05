@@ -1,0 +1,6 @@
+framework module Pods_JMMapViewDemo {
+  umbrella header "Pods-JMMapViewDemo-umbrella.h"
+
+  export *
+  module * { export * }
+}
