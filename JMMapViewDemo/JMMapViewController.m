@@ -12,12 +12,15 @@
 #import <MAMapKit/MAMapKit.h>
 #import <AMapFoundationKit/AMapFoundationKit.h>
 #import <AMapSearchKit/AMapSearchKit.h>
+#import <AMapNaviKit/AMapNaviKit.h>
+#import <AMapLocationKit/AMapLocationKit.h>
 
 
-
-
-@interface JMMapViewController ()<MAMapViewDelegate,AMapSearchDelegate>
+@interface JMMapViewController ()<MAMapViewDelegate,AMapSearchDelegate,AMapNaviDriveManagerDelegate,AMapLocationManagerDelegate>
 @property (nonatomic , strong) MAMapView *mapView;
+@property (nonatomic , strong) AMapNaviDriveManager *driveManager;//行车路线规划
+@property (nonatomic , strong) AMapLocationManager *locationManager;//定位
+@property (nonatomic , strong) CLLocation *myLocation;
 @property (nonatomic , strong) NSMutableArray *dataArr;
 @end
 
@@ -39,6 +42,9 @@
     
     MAUserLocationRepresentation *r = [[MAUserLocationRepresentation alloc] init];
     [self.mapView updateUserLocationRepresentation:r];
+    
+    //开始定位
+    [self startSerialLocation];
 
 }
 
@@ -71,9 +77,103 @@
     [self.mapView addAnnotations:array_annotations];
 }
 
+#pragma mark ---------------定位 ---------------------/
+- (void)startSerialLocation{
+    //开始定位
+    [self.locationManager startUpdatingLocation];
+}
+
+- (void)stopSerialLocation{
+    //停止定位
+    [self.locationManager stopUpdatingLocation];
+}
+
+- (void)amapLocationManager:(AMapLocationManager *)manager didUpdateLocation:(CLLocation *)location{
+    //定位结果
+    NSLog(@"location:{lat:%f; lon:%f; accuracy:%f}", location.coordinate.latitude, location.coordinate.longitude, location.horizontalAccuracy);
+    self.myLocation = location;
+}
+
 #pragma mark ---------------Event-------------------------/
 
 
+
+
+
+#pragma mark --------------- Map Delegate ---------------------/
+- (MAAnnotationView*)mapView:(MAMapView *)mapView viewForAnnotation:(id <MAAnnotation>)annotation {
+
+    static NSString *pointReuseIndetifier = @"pointReuseIndetifier";
+    MAAnnotationView *annotationView = (MAAnnotationView*)[mapView dequeueReusableAnnotationViewWithIdentifier:pointReuseIndetifier];
+    if (annotationView == nil){
+        annotationView = [[MAAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:pointReuseIndetifier];
+    }
+    annotationView.annotation = annotation;
+    annotationView.frame = CGRectMake(0, 0, 100, 100);
+    annotationView.canShowCallout= YES;       //设置气泡可以弹出，默认为NO
+    annotationView.image = [UIImage imageNamed:@"map_parking"];
+    
+    annotationView.draggable = YES;
+    
+    return annotationView;
+
+    
+    return nil;
+
+}
+
+- (void)mapView:(MAMapView *)mapView didSelectAnnotationView:(MAAnnotationView *)view{
+    CLLocationCoordinate2D coordinate = view.annotation.coordinate;
+    
+    AMapNaviPoint *startPoint = [AMapNaviPoint locationWithLatitude:self.myLocation.coordinate.latitude longitude:self.myLocation.coordinate.longitude];
+    AMapNaviPoint *endPoint = [AMapNaviPoint locationWithLatitude:coordinate.latitude longitude:coordinate.longitude];
+    [self.driveManager calculateDriveRouteWithStartPoints:@[startPoint]
+                                                endPoints:@[endPoint]
+                                                wayPoints:nil
+                                          drivingStrategy:17];
+}
+
+- (void)driveManagerOnCalculateRouteSuccess:(AMapNaviDriveManager *)driveManager
+{
+    NSLog(@"onCalculateRouteSuccess");
+    
+    //显示路径或开启导航
+    //将路径显示到地图上
+    if (driveManager.naviRoute == nil){
+        return;
+    }
+    
+    [self.mapView removeOverlays:self.mapView.overlays];
+    
+    AMapNaviRoute *aRoute = driveManager.naviRoute;
+    int count = (int)[[aRoute routeCoordinates] count];
+    
+    //添加路径Polyline
+    CLLocationCoordinate2D *coords = (CLLocationCoordinate2D *)malloc(count * sizeof(CLLocationCoordinate2D));
+    for (int i = 0; i < count; i++)
+    {
+        AMapNaviPoint *coordinate = [[aRoute routeCoordinates] objectAtIndex:i];
+        coords[i].latitude = [coordinate latitude];
+        coords[i].longitude = [coordinate longitude];
+    }
+    
+    MAPolyline *polyline = [MAPolyline polylineWithCoordinates:coords count:count];
+    
+    [self.mapView addOverlay:polyline];
+}
+
+- (MAOverlayRenderer *)mapView:(MAMapView *)mapView rendererForOverlay:(id<MAOverlay>)overlay{
+
+    if ([overlay isKindOfClass:[MAPolyline class]]){
+        MAPolylineRenderer *polylineRenderer = [[MAPolylineRenderer alloc] initWithPolyline:(MAPolyline *)overlay];
+        
+        polylineRenderer.lineWidth = 8.f;
+        polylineRenderer.strokeColor = [UIColor redColor];
+ 
+        return polylineRenderer;
+    }
+    return nil;
+}
 
 #pragma mark ---------------Lazy-------------------------/
 - (MAMapView *)mapView{
@@ -93,6 +193,24 @@
         _mapView.userTrackingMode = MAUserTrackingModeFollow;
     }
     return _mapView;
+}
+
+- (AMapNaviDriveManager *)driveManager{
+    if (!_driveManager) {
+        _driveManager = [[AMapNaviDriveManager alloc] init];
+        [_driveManager setDelegate:self];
+    }
+    return _driveManager;
+}
+
+- (AMapLocationManager *)locationManager{
+    if (!_locationManager) {
+        _locationManager = [[AMapLocationManager alloc]init];
+        [_locationManager setDelegate:self];
+        [_locationManager setPausesLocationUpdatesAutomatically:NO];
+
+    }
+    return _locationManager;
 }
 
 - (NSMutableArray *)dataArr{

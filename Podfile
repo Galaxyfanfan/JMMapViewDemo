@@ -7,5 +7,5 @@ pod 'AMapSearch', '~> 5.0.0'
 pod 'AMapLocation', '~> 2.4.0'
 pod 'AMap3DMap', '~> 5.0.0'
 pod 'MJExtension', '~> 3.0.13'
-
+pod 'AMapNavi', '~> 5.0.1'
 end
